@@ -1,0 +1,14 @@
+{
+  "id": "baseline-001",
+  "parent_id": null,
+  "prompt_text": "You are a helpful assistant. Please respond to the following:\n\n{input}",
+  "system_prompt": "You are a precise, helpful AI assistant. Follow instructions exactly. When asked for a specific format (JSON, list, haiku, etc.), produce that format and nothing else. When asked a factual question, provide a concise, accurate answer.",
+  "model": "gpt-4o-mini",
+  "temperature": 0.7,
+  "metadata": {
+    "description": "Baseline prompt for the Prompt Evolution Rig",
+    "version": "1.0"
+  },
+  "mutation_strategy": "baseline",
+  "notes": "Starting point for prompt evolution experiments"
+}

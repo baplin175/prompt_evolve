@@ -1,0 +1,38 @@
+{
+  "weights": {
+    "correctness": 0.50,
+    "robustness": 0.20,
+    "format_compliance": 0.20,
+    "latency_efficiency": 0.05,
+    "cost_efficiency": 0.05
+  },
+  "max_latency_ms": 10000.0,
+  "max_cost_usd": 0.10,
+  "scorers": [
+    {
+      "name": "exact_match",
+      "dimension": "correctness",
+      "weight": 1.0,
+      "case_sensitive": false
+    },
+    {
+      "name": "substring_match",
+      "dimension": "correctness",
+      "weight": 0.8,
+      "case_sensitive": false
+    },
+    {
+      "name": "length_constraint",
+      "dimension": "format_compliance",
+      "weight": 1.0,
+      "min_chars": 1,
+      "max_chars": 2000
+    },
+    {
+      "name": "json_field_presence",
+      "dimension": "format_compliance",
+      "weight": 0.5,
+      "required_fields": []
+    }
+  ]
+}
