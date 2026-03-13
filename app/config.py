@@ -16,9 +16,9 @@ OPENAI_API_KEY: str = _get("OPENAI_API_KEY")
 OPENAI_BASE_URL: str | None = os.environ.get("OPENAI_BASE_URL") or None
 
 # Matcha gateway configuration
-MATCHA_URL: str = _get("MATCHA_URL", "https://matcha.harriscomputer.com/rest/api/v1/completions")
-MATCHA_API_KEY: str = _get("MATCHA_API_KEY")
-MATCHA_MISSION_ID: str = _get("MATCHA_MISSION_ID", "27301")
+MATCHA_URL: str = "https://matcha.harriscomputer.com/rest/api/v1/completions"
+MATCHA_API_KEY: str = "15c0db915567455e98b90f1ecc22e088"
+MATCHA_MISSION_ID: str = "27301"
 MATCHA_API_KEY_HEADER: str = _get("MATCHA_API_KEY_HEADER", "X-API-Key")
 
 # Which LLM gateway to use: "matcha" or "openai"
