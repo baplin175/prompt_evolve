@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Prompt Evolve{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="number">{{ candidates | length }}</div>
+    <div class="label">Candidates</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">{{ eval_cases | length }}</div>
+    <div class="label">Eval Cases</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">{{ run_ids | length }}</div>
+    <div class="label">Scored Runs</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">{{ rounds | length }}</div>
+    <div class="label">Optimization Rounds</div>
+  </div>
+</div>
+
+{% if candidates %}
+<div class="card">
+  <h2>Recent Candidates</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Strategy</th>
+        <th>Model</th>
+        <th>Temp</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in candidates[-10:] | reverse %}
+      <tr>
+        <td><a href="/candidates/{{ c.id }}">{{ c.id[:12] }}…</a></td>
+        <td><span class="badge badge-primary">{{ c.mutation_strategy }}</span></td>
+        <td>{{ c.model }}</td>
+        <td>{{ c.temperature }}</td>
+        <td class="text-muted">{{ c.created_at[:19] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if run_ids %}
+<div class="card">
+  <h2>Scored Runs</h2>
+  <table>
+    <thead>
+      <tr><th>Run ID</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for rid in run_ids %}
+      <tr>
+        <td><a href="/runs/{{ rid }}">{{ rid }}</a></td>
+        <td><a href="/runs/{{ rid }}">View leaderboard →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if not candidates and not eval_cases %}
+<div class="empty-state">
+  <p>No data yet. Initialize the database and add some prompts:</p>
+  <p><code>prompt-evolve init</code></p>
+  <p><code>prompt-evolve prompt add --file data/prompts/baseline.json</code></p>
+</div>
+{% endif %}
+{% endblock %}

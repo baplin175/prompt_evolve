@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}{{ candidate.id[:12] }}… — Prompt Evolve{% endblock %}
+{% block content %}
+<h1>Candidate {{ candidate.id[:12] }}…</h1>
+
+<div class="card">
+  <h2>Details</h2>
+  <table>
+    <tr><th style="width:160px">ID</th><td>{{ candidate.id }}</td></tr>
+    <tr><th>Strategy</th><td><span class="badge badge-primary">{{ candidate.mutation_strategy }}</span></td></tr>
+    <tr><th>Model</th><td>{{ candidate.model }}</td></tr>
+    <tr><th>Temperature</th><td>{{ candidate.temperature }}</td></tr>
+    <tr>
+      <th>Parent</th>
+      <td>
+        {% if candidate.parent_id %}
+          <a href="/candidates/{{ candidate.parent_id }}">{{ candidate.parent_id }}</a>
+        {% else %}
+          <span class="text-muted">None (baseline)</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% if candidate.system_prompt %}
+    <tr><th>System Prompt</th><td>{{ candidate.system_prompt }}</td></tr>
+    {% endif %}
+    <tr><th>Notes</th><td>{{ candidate.notes or "—" }}</td></tr>
+    <tr><th>Created</th><td>{{ candidate.created_at }}</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Prompt Text</h2>
+  <div class="prompt-text">{{ candidate.prompt_text }}</div>
+</div>
+
+{% if scores %}
+<div class="card">
+  <h2>Scores</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Run ID</th>
+        <th>Aggregate Score</th>
+        <th>Eval Cases</th>
+        <th>Errors</th>
+        <th>Avg Latency</th>
+        <th>Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in scores %}
+      <tr>
+        <td><a href="/runs/{{ s.run_id }}">{{ s.run_id[:12] }}…</a></td>
+        <td>
+          <div class="score-bar">
+            <div class="fill" style="width:{{ (s.aggregate_score * 100) | round(1) }}%; background:{% if s.aggregate_score >= 0.7 %}var(--success){% elif s.aggregate_score >= 0.4 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+          </div>
+          {{ "%.4f" | format(s.aggregate_score) }}
+        </td>
+        <td>{{ s.eval_case_count }}</td>
+        <td>
+          {% if s.error_count > 0 %}
+            <span class="badge badge-danger">{{ s.error_count }}</span>
+          {% else %}
+            <span class="badge badge-success">0</span>
+          {% endif %}
+        </td>
+        <td>{{ "%.1f" | format(s.avg_latency_ms) }} ms</td>
+        <td>{{ "$%.4f" | format(s.total_cost_usd) if s.total_cost_usd is not none else "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if children %}
+<div class="card">
+  <h2>Children (Mutations)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Strategy</th>
+        <th>Model</th>
+        <th>Temp</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in children %}
+      <tr>
+        <td><a href="/candidates/{{ c.id }}">{{ c.id[:12] }}…</a></td>
+        <td><span class="badge badge-primary">{{ c.mutation_strategy }}</span></td>
+        <td>{{ c.model }}</td>
+        <td>{{ c.temperature }}</td>
+        <td class="text-muted">{{ c.created_at[:19] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Eval Cases — Prompt Evolve{% endblock %}
+{% block content %}
+<h1>Evaluation Cases</h1>
+
+{% if eval_cases %}
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Input</th>
+        <th>Expected Output</th>
+        <th>Difficulty</th>
+        <th>Tags</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ec in eval_cases %}
+      <tr>
+        <td>{{ ec.id[:12] }}…</td>
+        <td class="truncate">{{ ec.input[:80] }}{% if ec.input | length > 80 %}…{% endif %}</td>
+        <td class="truncate">{{ ec.expected_output[:60] if ec.expected_output else "—" }}{% if ec.expected_output and ec.expected_output | length > 60 %}…{% endif %}</td>
+        <td>
+          {% if ec.difficulty == "easy" %}
+            <span class="badge badge-success">{{ ec.difficulty }}</span>
+          {% elif ec.difficulty == "hard" %}
+            <span class="badge badge-danger">{{ ec.difficulty }}</span>
+          {% else %}
+            <span class="badge badge-warning">{{ ec.difficulty }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% for tag in ec.tags %}
+            <span class="badge badge-muted">{{ tag }}</span>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No eval cases found.</p>
+  <p><code>prompt-evolve run --eval-set data/eval_cases/sample_eval.jsonl</code></p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Optimization Rounds — Prompt Evolve{% endblock %}
+{% block content %}
+<h1>Optimization Rounds</h1>
+
+{% if rounds %}
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Round</th>
+        <th>Strategy</th>
+        <th>Run ID</th>
+        <th>Candidates Evaluated</th>
+        <th>Top Candidates</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rnd in rounds %}
+      <tr>
+        <td><strong>{{ rnd.round_number }}</strong></td>
+        <td><span class="badge badge-primary">{{ rnd.strategy }}</span></td>
+        <td><a href="/runs/{{ rnd.run_id }}">{{ rnd.run_id[:12] }}{% if rnd.run_id | length > 12 %}…{% endif %}</a></td>
+        <td>{{ rnd.candidates_evaluated | length if rnd.candidates_evaluated is iterable and rnd.candidates_evaluated is not string else "—" }}</td>
+        <td>{{ rnd.top_candidate_ids | length if rnd.top_candidate_ids is iterable and rnd.top_candidate_ids is not string else "—" }}</td>
+        <td class="text-muted">{{ rnd.created_at[:19] if rnd.created_at else "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% for rnd in rounds %}
+{% if rnd.scores and rnd.scores is mapping %}
+<div class="card">
+  <h2>Round {{ rnd.round_number }} — Scores</h2>
+  <table>
+    <thead>
+      <tr><th>Candidate</th><th>Score</th></tr>
+    </thead>
+    <tbody>
+      {% for cid, sc in rnd.scores.items() %}
+      <tr>
+        <td><a href="/candidates/{{ cid }}">{{ cid[:12] }}…</a></td>
+        <td>
+          <div class="score-bar">
+            <div class="fill" style="width:{{ (sc * 100) | round(1) }}%; background:{% if sc >= 0.7 %}var(--success){% elif sc >= 0.4 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+          </div>
+          {{ "%.4f" | format(sc) }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <p>No optimization rounds found.</p>
+  <p><code>prompt-evolve optimize --baseline data/prompts/baseline.json --eval-set data/eval_cases/sample_eval.jsonl</code></p>
+</div>
+{% endif %}
+{% endblock %}
