@@ -83,16 +83,33 @@ class EvalRunner:
         case: EvalCase,
     ) -> RunResult:
         """Evaluate a single candidate/case pair."""
-        # Build user content by substituting {input} placeholder
-        try:
-            user_content = candidate.prompt_text.format(input=case.input)
-        except KeyError as exc:
-            logger.warning(
-                "Prompt template substitution failed for candidate %s: %s",
-                candidate.id[:8],
-                exc,
-            )
-            user_content = f"{candidate.prompt_text}\n\n{case.input}"
+        if case.is_multi_turn:
+            # Build full message list from conversation turns
+            messages: list[dict[str, str]] = []
+            if candidate.system_prompt:
+                messages.append({"role": "system", "content": candidate.system_prompt})
+            for turn in case.turns:
+                content = turn.content
+                if turn.role == "user":
+                    try:
+                        content = candidate.prompt_text.format(input=content)
+                    except KeyError:
+                        content = f"{candidate.prompt_text}\n\n{content}"
+                messages.append({"role": turn.role, "content": content})
+            # For display / fallback, derive user_content from the last user turn
+            user_content = messages[-1]["content"] if messages else case.input
+        else:
+            messages = None  # type: ignore[assignment]
+            # Build user content by substituting {input} placeholder
+            try:
+                user_content = candidate.prompt_text.format(input=case.input)
+            except KeyError as exc:
+                logger.warning(
+                    "Prompt template substitution failed for candidate %s: %s",
+                    candidate.id[:8],
+                    exc,
+                )
+                user_content = f"{candidate.prompt_text}\n\n{case.input}"
 
         if self._dry_run:
             logger.debug("DRY RUN: skipping LLM call for case %s", case.id[:8])
@@ -111,6 +128,7 @@ class EvalRunner:
                 max_tokens=self._max_tokens,
                 system_prompt=candidate.system_prompt,
                 user_content=user_content,
+                messages=messages,
             )
 
             # Try to parse output as JSON

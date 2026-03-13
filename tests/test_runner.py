@@ -9,7 +9,7 @@ import pytest
 
 from app.gateway.base import GatewayResponse
 from app.models.candidate import PromptCandidate
-from app.models.eval_case import EvalCase
+from app.models.eval_case import ConversationTurn, EvalCase
 from app.runner.runner import EvalRunner
 
 
@@ -75,6 +75,7 @@ class TestEvalRunner:
             max_tokens=512,
             system_prompt="You are an expert.",
             user_content="Answer: Hello",
+            messages=None,
         )
 
     def test_gateway_error_stored_in_result(self, mock_gateway):
@@ -143,3 +144,89 @@ class TestEvalRunner:
         _, results = runner.run([_candidate()], [_case()])
 
         assert results[0].parsed_output == {"key": "value"}
+
+
+class TestMultiTurnEval:
+    """Tests for multi-turn conversation eval cases."""
+
+    def _multi_turn_case(self, **kwargs) -> EvalCase:
+        defaults = dict(
+            id=str(uuid.uuid4()),
+            input="What is the population?",
+            expected_output=None,
+            turns=[
+                ConversationTurn(role="user", content="What is the capital of France?"),
+                ConversationTurn(role="assistant", content="The capital of France is Paris."),
+                ConversationTurn(role="user", content="What is the population?"),
+            ],
+        )
+        defaults.update(kwargs)
+        return EvalCase(**defaults)
+
+    def test_multi_turn_case_is_detected(self):
+        case = self._multi_turn_case()
+        assert case.is_multi_turn is True
+
+    def test_single_turn_case_not_multi_turn(self):
+        case = _case()
+        assert case.is_multi_turn is False
+
+    def test_multi_turn_sends_messages(self, mock_gateway):
+        runner = EvalRunner(gateway=mock_gateway)
+        cand = _candidate(system_prompt="You are helpful.")
+        case = self._multi_turn_case()
+        runner.run([cand], [case])
+
+        call_kwargs = mock_gateway.complete.call_args.kwargs
+        assert call_kwargs["messages"] is not None
+        msgs = call_kwargs["messages"]
+        # system + 3 turns
+        assert len(msgs) == 4
+        assert msgs[0]["role"] == "system"
+        assert msgs[1]["role"] == "user"
+        assert msgs[2]["role"] == "assistant"
+        assert msgs[3]["role"] == "user"
+
+    def test_multi_turn_without_system_prompt(self, mock_gateway):
+        runner = EvalRunner(gateway=mock_gateway)
+        cand = _candidate(system_prompt=None)
+        case = self._multi_turn_case()
+        runner.run([cand], [case])
+
+        call_kwargs = mock_gateway.complete.call_args.kwargs
+        msgs = call_kwargs["messages"]
+        # No system prompt, just 3 turns
+        assert len(msgs) == 3
+        assert msgs[0]["role"] == "user"
+
+    def test_multi_turn_prompt_template_applied_to_user_turns(self, mock_gateway):
+        runner = EvalRunner(gateway=mock_gateway)
+        cand = _candidate(prompt_text="Please answer: {input}", system_prompt=None)
+        case = self._multi_turn_case()
+        runner.run([cand], [case])
+
+        call_kwargs = mock_gateway.complete.call_args.kwargs
+        msgs = call_kwargs["messages"]
+        # User turns should have prompt template applied
+        assert "Please answer: What is the capital of France?" in msgs[0]["content"]
+        # Assistant turn should be unchanged
+        assert msgs[1]["content"] == "The capital of France is Paris."
+        assert "Please answer: What is the population?" in msgs[2]["content"]
+
+    def test_multi_turn_dry_run(self, mock_gateway):
+        runner = EvalRunner(gateway=mock_gateway, dry_run=True)
+        case = self._multi_turn_case()
+        _, results = runner.run([_candidate()], [case])
+
+        mock_gateway.complete.assert_not_called()
+        assert "[DRY RUN" in results[0].raw_output
+
+    def test_multi_turn_result_has_correct_ids(self, mock_gateway):
+        runner = EvalRunner(gateway=mock_gateway)
+        cand = _candidate()
+        case = self._multi_turn_case()
+        run_id, results = runner.run([cand], [case])
+
+        assert results[0].candidate_id == cand.id
+        assert results[0].eval_case_id == case.id
+        assert results[0].run_id == run_id

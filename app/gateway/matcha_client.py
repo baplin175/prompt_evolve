@@ -11,6 +11,8 @@ import requests
 from app import config
 from app.gateway.base import GatewayClient, GatewayResponse
 
+from typing import Any
+
 logger = logging.getLogger(__name__)
 
 
@@ -66,11 +68,19 @@ class MatchaClient(GatewayClient):
         max_tokens: int,
         system_prompt: Optional[str],
         user_content: str,
+        messages: Optional[list[dict[str, Any]]] = None,
     ) -> GatewayResponse:
         """Send a completion request to the Matcha API with retry/backoff."""
-        prompt = user_content
-        if system_prompt:
-            prompt = f"{system_prompt}\n\n{user_content}"
+        if messages is not None:
+            # For multi-turn, concatenate all messages into a single prompt
+            parts: list[str] = []
+            for msg in messages:
+                parts.append(msg.get("content", ""))
+            prompt = "\n\n".join(parts)
+        else:
+            prompt = user_content
+            if system_prompt:
+                prompt = f"{system_prompt}\n\n{user_content}"
 
         headers = {
             "Content-Type": "application/json",
