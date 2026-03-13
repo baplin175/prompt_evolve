@@ -15,6 +15,7 @@ Prompt Evolve helps you systematically improve LLM prompts by:
 5. **Selecting** the best candidates (hill climbing or beam search)
 6. **Repeating** for configurable rounds
 7. **Reporting** the best prompt, leaderboard, and failure analysis
+8. **Exploring** results interactively via a built-in web UI
 
 ---
 
@@ -28,11 +29,25 @@ pip install -e ".[dev]"
 
 ### 2. Configure
 
-Copy `.env.example` to `.env` and set your API key:
+Copy `.env.example` to `.env` and set your credentials:
 
 ```bash
 cp .env.example .env
-# Edit .env and set OPENAI_API_KEY=sk-...
+```
+
+By default the project uses the **Matcha** LLM gateway. Set the required
+variables in `.env`:
+
+```bash
+LLM_GATEWAY=matcha          # "matcha" (default) or "openai"
+MATCHA_API_KEY=your-key
+```
+
+To use **OpenAI** instead, switch the gateway and provide an API key:
+
+```bash
+LLM_GATEWAY=openai
+OPENAI_API_KEY=sk-...
 ```
 
 ### 3. Initialize
@@ -87,8 +102,20 @@ prompt-evolve optimize \
   --rounds 3 \
   --beam-width 3 \
   --variants-per-candidate 2 \
-  --operators simplify_wording,tighten_constraints,add_examples
+  --operators simplify_wording,tighten_constraints,add_examples \
+  --scoring-config data/scoring_config.json \
+  --report-output data/reports/final_report.md \
+  --dry-run
 ```
+
+### 11. Launch the web UI
+
+```bash
+prompt-evolve web --host 127.0.0.1 --port 5000
+```
+
+Open `http://127.0.0.1:5000` to browse candidates, runs, scores, eval cases,
+and optimization rounds interactively.
 
 ---
 
@@ -177,14 +204,39 @@ Add to `scorers` in your scoring config:
 app/
   cli.py                    # Click CLI entrypoints
   config.py                 # Environment configuration
-  models/                   # Pydantic data models
-  gateway/                  # LLM gateway abstraction
-  mutations/                # Mutation operators and engine
-  runner/                   # Eval runner
-  scoring/                  # Scorers and aggregator
-  optimization/             # Hill climbing, beam search, evolution loop
-  reporting/                # Leaderboard and markdown report generator
-  storage/                  # SQLite schema and JSONL artifacts
+  web.py                    # Flask web UI
+  templates/                # Jinja2 HTML templates for the web UI
+  models/
+    candidate.py            # PromptCandidate
+    eval_case.py            # EvalCase
+    run_result.py           # RunResult
+    score.py                # Score / ScoreBreakdown / CandidateScore
+    round_summary.py        # OptimizationRound
+  gateway/
+    base.py                 # Abstract GatewayClient
+    openai_client.py        # OpenAI-compatible implementation
+    matcha_client.py        # Matcha gateway implementation (default)
+  mutations/
+    base.py                 # MutationOperator protocol
+    operators.py            # All 8 mutation operator implementations
+    engine.py               # MutationEngine orchestrator
+  runner/
+    runner.py               # EvalRunner
+  scoring/
+    base.py                 # Scorer protocol
+    deterministic.py        # Exact match, regex, JSON, length, custom
+    judge.py                # ModelJudgeScorer
+    aggregator.py           # Weighted score aggregation
+  optimization/
+    hill_climbing.py        # HillClimbingSelector
+    beam_search.py          # BeamSearchSelector
+    loop.py                 # EvolutionLoop orchestrator
+  reporting/
+    leaderboard.py          # Leaderboard builder
+    report.py               # Markdown report generator
+  storage/
+    db.py                   # SQLite schema + helpers
+    artifacts.py            # JSONL artifact writer/reader
 data/
   eval_cases/sample_eval.jsonl    # 12 diverse eval cases
   prompts/baseline.json           # Sample baseline prompt
@@ -197,6 +249,8 @@ tests/
   test_selection.py
   test_mutations.py
   test_runner.py
+  test_matcha_client.py
+  test_web.py
 ```
 
 ---
@@ -207,7 +261,12 @@ All settings can be overridden via environment variables or `.env`:
 
 | Variable | Default | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | — | Required for real LLM calls |
+| `LLM_GATEWAY` | `matcha` | LLM gateway to use (`matcha` or `openai`) |
+| `MATCHA_URL` | `https://matcha.harriscomputer.com/rest/api/v1/completions` | Matcha endpoint URL |
+| `MATCHA_API_KEY` | — | API key for the Matcha gateway |
+| `MATCHA_MISSION_ID` | `27301` | Matcha mission ID |
+| `MATCHA_API_KEY_HEADER` | `X-API-Key` | HTTP header name for the Matcha API key |
+| `OPENAI_API_KEY` | — | Required when `LLM_GATEWAY=openai` |
 | `OPENAI_BASE_URL` | OpenAI | Custom base URL (Azure, Ollama, etc.) |
 | `DEFAULT_MODEL` | `gpt-4o-mini` | Default model |
 | `DEFAULT_MAX_TOKENS` | `1024` | Default max tokens |
@@ -240,7 +299,7 @@ All tests run without an API key (gateway calls are mocked).
 ## Next Improvements
 
 1. Add async/parallel evaluation for faster runs.
-2. Add a web UI for interactive exploration.
+2. ~~Add a web UI for interactive exploration.~~ ✅ Done — see `prompt-evolve web`.
 3. Support multi-turn conversation eval cases.
 4. Add A/B significance testing for score comparisons.
 5. Export best prompt to a simple JSON artifact for deployment.
