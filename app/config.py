@@ -15,6 +15,15 @@ def _get(key: str, default: str = "") -> str:
 OPENAI_API_KEY: str = _get("OPENAI_API_KEY")
 OPENAI_BASE_URL: str | None = os.environ.get("OPENAI_BASE_URL") or None
 
+# Matcha gateway configuration
+MATCHA_URL: str = _get("MATCHA_URL", "https://matcha.harriscomputer.com/rest/api/v1/completions")
+MATCHA_API_KEY: str = _get("MATCHA_API_KEY")
+MATCHA_MISSION_ID: str = _get("MATCHA_MISSION_ID", "27301")
+MATCHA_API_KEY_HEADER: str = _get("MATCHA_API_KEY_HEADER", "X-API-Key")
+
+# Which LLM gateway to use: "matcha" or "openai"
+LLM_GATEWAY: str = _get("LLM_GATEWAY", "matcha")
+
 DEFAULT_MODEL: str = _get("DEFAULT_MODEL", "gpt-4o-mini")
 DEFAULT_MAX_TOKENS: int = int(_get("DEFAULT_MAX_TOKENS", "1024"))
 LLM_TIMEOUT_SECONDS: float = float(_get("LLM_TIMEOUT_SECONDS", "60"))
