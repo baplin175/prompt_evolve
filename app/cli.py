@@ -33,6 +33,9 @@ def _get_conn(db_path: Path):
 
 
 def _load_gateway():
+    if cfg.LLM_GATEWAY == "matcha":
+        from app.gateway.matcha_client import MatchaClient
+        return MatchaClient()
     from app.gateway.openai_client import OpenAIClient
     return OpenAIClient()
 
