@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
+from typing import Any, Optional
 
 import openai
 from tenacity import (
@@ -13,8 +13,6 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
-
-from typing import Any
 
 from app import config
 from app.gateway.base import GatewayClient, GatewayResponse

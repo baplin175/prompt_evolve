@@ -83,9 +83,11 @@ class EvalRunner:
         case: EvalCase,
     ) -> RunResult:
         """Evaluate a single candidate/case pair."""
+        messages: Optional[list[dict[str, str]]] = None
+
         if case.is_multi_turn:
             # Build full message list from conversation turns
-            messages: list[dict[str, str]] = []
+            messages = []
             if candidate.system_prompt:
                 messages.append({"role": "system", "content": candidate.system_prompt})
             for turn in case.turns:
@@ -99,7 +101,6 @@ class EvalRunner:
             # For display / fallback, derive user_content from the last user turn
             user_content = messages[-1]["content"] if messages else case.input
         else:
-            messages = None  # type: ignore[assignment]
             # Build user content by substituting {input} placeholder
             try:
                 user_content = candidate.prompt_text.format(input=case.input)

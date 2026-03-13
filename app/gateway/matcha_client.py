@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
+from typing import Any, Optional
 
 import requests
 
 from app import config
 from app.gateway.base import GatewayClient, GatewayResponse
-
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
