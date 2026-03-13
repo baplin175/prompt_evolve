@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Runs — Prompt Evolve{% endblock %}
+{% block content %}
+<h1>Evaluation Runs</h1>
+
+{% if runs %}
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Run ID</th>
+        <th>Results</th>
+        <th>Errors</th>
+        <th>Avg Latency</th>
+        <th>Started</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in runs %}
+      <tr>
+        <td><a href="/runs/{{ r.run_id }}">{{ r.run_id }}</a></td>
+        <td>{{ r.result_count }}</td>
+        <td>
+          {% if r.error_count > 0 %}
+            <span class="badge badge-danger">{{ r.error_count }}</span>
+          {% else %}
+            <span class="badge badge-success">0</span>
+          {% endif %}
+        </td>
+        <td>{{ "%.1f" | format(r.avg_latency_ms) }} ms</td>
+        <td class="text-muted">{{ r.started_at[:19] if r.started_at else "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No runs found.</p>
+  <p><code>prompt-evolve run --eval-set data/eval_cases/sample_eval.jsonl</code></p>
+</div>
+{% endif %}
+{% endblock %}

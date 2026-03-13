@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Run {{ run_id[:12] }}… — Prompt Evolve{% endblock %}
+{% block content %}
+<h1>Run {{ run_id }}</h1>
+
+{% if leaderboard %}
+<div class="card">
+  <h2>Leaderboard</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Candidate</th>
+        <th>Score</th>
+        <th>Strategy</th>
+        <th>Eval Cases</th>
+        <th>Errors</th>
+        <th>Avg Latency</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in leaderboard %}
+      <tr>
+        <td><strong>{{ entry.rank }}</strong></td>
+        <td><a href="/candidates/{{ entry.candidate_id }}">{{ entry.candidate_id[:12] }}…</a></td>
+        <td>
+          <div class="score-bar">
+            <div class="fill" style="width:{{ (entry.aggregate_score * 100) | round(1) }}%; background:{% if entry.aggregate_score >= 0.7 %}var(--success){% elif entry.aggregate_score >= 0.4 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+          </div>
+          {{ entry.aggregate_score }}
+        </td>
+        <td><span class="badge badge-primary">{{ entry.mutation_strategy }}</span></td>
+        <td>{{ entry.eval_case_count }}</td>
+        <td>
+          {% if entry.error_count > 0 %}
+            <span class="badge badge-danger">{{ entry.error_count }}</span>
+          {% else %}
+            <span class="badge badge-success">0</span>
+          {% endif %}
+        </td>
+        <td>{{ entry.avg_latency_ms }} ms</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Run Results ({{ results | length }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Candidate</th>
+        <th>Eval Case</th>
+        <th>Output Preview</th>
+        <th>Error</th>
+        <th>Latency</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in results %}
+      <tr>
+        <td><a href="/candidates/{{ r.candidate_id }}">{{ r.candidate_id[:12] }}…</a></td>
+        <td>{{ r.eval_case_id[:12] }}…</td>
+        <td class="truncate">{{ r.raw_output[:80] if r.raw_output else "—" }}{% if r.raw_output and r.raw_output | length > 80 %}…{% endif %}</td>
+        <td>
+          {% if r.error %}
+            <span class="badge badge-danger" title="{{ r.error }}">error</span>
+          {% else %}
+            <span class="badge badge-success">ok</span>
+          {% endif %}
+        </td>
+        <td>{{ "%.1f" | format(r.latency_ms) }} ms</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

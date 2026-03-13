@@ -436,5 +436,27 @@ def optimize(
         click.echo(f"  Report: {report_path}")
 
 
+# ---------------------------------------------------------------------------
+# web
+# ---------------------------------------------------------------------------
+
+
+@cli.command()
+@click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind to")
+@click.option("--port", default=5000, show_default=True, help="Port to listen on")
+@click.pass_context
+def web(ctx, host, port):
+    """Launch the web UI for interactive exploration."""
+    from app.web import create_app
+
+    db_path = _get_db_path(ctx.obj.get("db"))
+    storage.init_db(db_path)
+
+    app = create_app(db_path=db_path)
+    click.echo(f"Starting web UI at http://{host}:{port}")
+    click.echo(f"Database: {db_path}")
+    app.run(host=host, port=port)
+
+
 if __name__ == "__main__":
     cli()

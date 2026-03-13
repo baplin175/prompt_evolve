@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Candidates — Prompt Evolve{% endblock %}
+{% block content %}
+<h1>Prompt Candidates</h1>
+
+{% if candidates %}
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Strategy</th>
+        <th>Model</th>
+        <th>Temp</th>
+        <th>Parent</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in candidates %}
+      <tr>
+        <td><a href="/candidates/{{ c.id }}">{{ c.id[:12] }}…</a></td>
+        <td><span class="badge badge-primary">{{ c.mutation_strategy }}</span></td>
+        <td>{{ c.model }}</td>
+        <td>{{ c.temperature }}</td>
+        <td>
+          {% if c.parent_id %}
+            <a href="/candidates/{{ c.parent_id }}">{{ c.parent_id[:12] }}…</a>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+        <td class="text-muted">{{ c.created_at[:19] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No candidates found.</p>
+  <p><code>prompt-evolve prompt add --file data/prompts/baseline.json</code></p>
+</div>
+{% endif %}
+{% endblock %}
