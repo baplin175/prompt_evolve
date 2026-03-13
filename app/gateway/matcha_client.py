@@ -83,8 +83,9 @@ class MatchaClient(GatewayClient):
 
         last_error: Optional[Exception] = None
         t0 = time.perf_counter()
+        retries = max(self._max_retries, 1)
 
-        for attempt in range(1, self._max_retries + 1):
+        for attempt in range(1, retries + 1):
             try:
                 response = requests.post(
                     self._url,
@@ -112,12 +113,12 @@ class MatchaClient(GatewayClient):
                 )
             except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as exc:
                 last_error = exc
-                if attempt < self._max_retries:
+                if attempt < retries:
                     wait = self._retry_backoff * (2 ** (attempt - 1))
                     logger.warning(
                         "Matcha call failed (attempt %d/%d): %s — retrying in %ds",
                         attempt,
-                        self._max_retries,
+                        retries,
                         exc,
                         wait,
                     )

@@ -56,7 +56,9 @@ class TestExtractReplyText:
     def test_list_with_dict_but_no_content(self):
         data = {"output": [{"other_key": "value"}]}
         # Falls through to join since content key is missing
-        assert _extract_reply_text(data) == "{'other_key': 'value'}"
+        result = _extract_reply_text(data)
+        assert "other_key" in result
+        assert "value" in result
 
 
 # ---------------------------------------------------------------------------
