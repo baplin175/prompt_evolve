@@ -182,7 +182,7 @@ def create_app(db_path: Path | None = None) -> Flask:
                         try:
                             rnd[key] = json.loads(rnd[key])
                         except (json.JSONDecodeError, TypeError):
-                            pass
+                            logger.debug("Could not parse JSON for round field %s", key)
             return render_template("rounds.html", rounds=rounds)
         finally:
             conn.close()

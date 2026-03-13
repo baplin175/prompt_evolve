@@ -21,7 +21,7 @@
       <tr>
         <td><strong>{{ rnd.round_number }}</strong></td>
         <td><span class="badge badge-primary">{{ rnd.strategy }}</span></td>
-        <td><a href="/runs/{{ rnd.run_id }}">{{ rnd.run_id[:12] if rnd.run_id | length > 12 else rnd.run_id }}{% if rnd.run_id | length > 12 %}…{% endif %}</a></td>
+        <td><a href="/runs/{{ rnd.run_id }}">{{ rnd.run_id[:12] }}{% if rnd.run_id | length > 12 %}…{% endif %}</a></td>
         <td>{{ rnd.candidates_evaluated | length if rnd.candidates_evaluated is iterable and rnd.candidates_evaluated is not string else "—" }}</td>
         <td>{{ rnd.top_candidate_ids | length if rnd.top_candidate_ids is iterable and rnd.top_candidate_ids is not string else "—" }}</td>
         <td class="text-muted">{{ rnd.created_at[:19] if rnd.created_at else "—" }}</td>
