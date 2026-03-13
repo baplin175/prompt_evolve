@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
+from typing import Any, Optional
 
 import openai
 from tenacity import (
@@ -60,6 +60,7 @@ class OpenAIClient(GatewayClient):
         max_tokens: int,
         system_prompt: Optional[str],
         user_content: str,
+        messages: Optional[list[dict[str, Any]]] = None,
     ) -> GatewayResponse:
         """Send a chat completion request with retry/backoff."""
         return self._complete_with_retry(
@@ -68,6 +69,7 @@ class OpenAIClient(GatewayClient):
             max_tokens=max_tokens,
             system_prompt=system_prompt,
             user_content=user_content,
+            messages=messages,
         )
 
     def _complete_with_retry(
@@ -78,6 +80,7 @@ class OpenAIClient(GatewayClient):
         max_tokens: int,
         system_prompt: Optional[str],
         user_content: str,
+        messages: Optional[list[dict[str, Any]]] = None,
     ) -> GatewayResponse:
         """Inner method so we can apply tenacity retry decorator dynamically."""
         attempt_fn = retry(
@@ -93,6 +96,7 @@ class OpenAIClient(GatewayClient):
             max_tokens=max_tokens,
             system_prompt=system_prompt,
             user_content=user_content,
+            messages=messages,
         )
 
     def _do_complete(
@@ -103,18 +107,22 @@ class OpenAIClient(GatewayClient):
         max_tokens: int,
         system_prompt: Optional[str],
         user_content: str,
+        messages: Optional[list[dict[str, Any]]] = None,
     ) -> GatewayResponse:
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": user_content})
+        if messages is not None:
+            chat_messages = list(messages)
+        else:
+            chat_messages = []
+            if system_prompt:
+                chat_messages.append({"role": "system", "content": system_prompt})
+            chat_messages.append({"role": "user", "content": user_content})
 
         logger.debug("Calling %s (temp=%.2f, max_tokens=%d)", model, temperature, max_tokens)
 
         t0 = time.perf_counter()
         response = self._client.chat.completions.create(
             model=model,
-            messages=messages,
+            messages=chat_messages,
             temperature=temperature,
             max_tokens=max_tokens,
         )

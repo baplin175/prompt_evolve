@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS eval_cases (
     reference_output TEXT,
     tags TEXT NOT NULL DEFAULT '[]',
     difficulty TEXT NOT NULL DEFAULT 'medium',
-    metadata TEXT NOT NULL DEFAULT '{}'
+    metadata TEXT NOT NULL DEFAULT '{}',
+    conversation_turns TEXT NOT NULL DEFAULT '[]'
 );
 
 CREATE TABLE IF NOT EXISTS run_results (
@@ -171,8 +172,9 @@ def _row_to_candidate(row: sqlite3.Row) -> PromptCandidate:
 def upsert_eval_case(conn: sqlite3.Connection, case: EvalCase) -> None:
     conn.execute(
         """INSERT OR REPLACE INTO eval_cases
-           (id, input, expected_output, reference_output, tags, difficulty, metadata)
-           VALUES (?,?,?,?,?,?,?)""",
+           (id, input, expected_output, reference_output, tags, difficulty, metadata,
+            conversation_turns)
+           VALUES (?,?,?,?,?,?,?,?)""",
         (
             case.id,
             case.input,
@@ -181,6 +183,7 @@ def upsert_eval_case(conn: sqlite3.Connection, case: EvalCase) -> None:
             json.dumps(case.tags),
             case.difficulty,
             json.dumps(case.metadata),
+            json.dumps([t.model_dump() for t in case.turns]),
         ),
     )
     conn.commit()
@@ -200,6 +203,7 @@ def _row_to_eval_case(row: sqlite3.Row) -> EvalCase:
         tags=json.loads(row["tags"]),
         difficulty=row["difficulty"],
         metadata=json.loads(row["metadata"]),
+        turns=json.loads(row["conversation_turns"]),
     )
 
 

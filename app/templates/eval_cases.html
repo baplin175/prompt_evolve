@@ -9,6 +9,7 @@
     <thead>
       <tr>
         <th>ID</th>
+        <th>Type</th>
         <th>Input</th>
         <th>Expected Output</th>
         <th>Difficulty</th>
@@ -19,6 +20,13 @@
       {% for ec in eval_cases %}
       <tr>
         <td>{{ ec.id[:12] }}…</td>
+        <td>
+          {% if ec.is_multi_turn %}
+            <span class="badge badge-info" title="{{ ec.turns | length }} turns">multi-turn ({{ ec.turns | length }})</span>
+          {% else %}
+            <span class="badge badge-muted">single-turn</span>
+          {% endif %}
+        </td>
         <td class="truncate">{{ ec.input[:80] }}{% if ec.input | length > 80 %}…{% endif %}</td>
         <td class="truncate">{{ ec.expected_output[:60] if ec.expected_output else "—" }}{% if ec.expected_output and ec.expected_output | length > 60 %}…{% endif %}</td>
         <td>

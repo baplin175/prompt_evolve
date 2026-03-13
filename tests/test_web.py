@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from app.models.candidate import PromptCandidate
-from app.models.eval_case import EvalCase
+from app.models.eval_case import ConversationTurn, EvalCase
 from app.models.run_result import RunResult
 from app.models.score import CandidateScore
 from app.storage import db as storage
@@ -187,6 +187,35 @@ class TestEvalCases:
         assert resp.status_code == 200
         assert b"capital of France" in resp.data
         assert b"easy" in resp.data
+
+    def test_eval_cases_shows_single_turn_badge(self, seeded_client):
+        resp = seeded_client.get("/eval-cases")
+        assert resp.status_code == 200
+        assert b"single-turn" in resp.data
+
+    def test_eval_cases_shows_multi_turn_badge(self, web_db):
+        conn = storage.get_connection(web_db)
+        multi_case = EvalCase(
+            id="eval-mt-001",
+            input="What is the population?",
+            expected_output=None,
+            tags=["multi-turn"],
+            difficulty="medium",
+            turns=[
+                ConversationTurn(role="user", content="What is the capital of France?"),
+                ConversationTurn(role="assistant", content="Paris."),
+                ConversationTurn(role="user", content="What is the population?"),
+            ],
+        )
+        storage.upsert_eval_case(conn, multi_case)
+        conn.close()
+
+        app = create_app(db_path=web_db)
+        app.config["TESTING"] = True
+        with app.test_client() as c:
+            resp = c.get("/eval-cases")
+            assert resp.status_code == 200
+            assert b"multi-turn" in resp.data
 
 
 class TestRounds:
